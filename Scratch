@@ -1,0 +1,87 @@
+import time
+import tkinter as tk
+
+from functools import partial
+
+keys = [
+    # Key rows
+    ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '?', '!'),
+    ('q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'ü'),
+    ('a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ö', 'ä'),
+    ('y', 'z', 'c', 'v', 'b', 'n', 'm', ',', '.', 'backspace', 'enter'),
+    " "
+]
+
+
+def check_mouse():
+    global active_widget
+    global timestamp
+    delay = 10
+    hovered_widget = root.winfo_containing(root.winfo_pointerx(), root.winfo_pointery())
+    if type(hovered_widget) == tk.Button:
+        if hovered_widget == active_widget:
+            passed_time = get_timestamp() - timestamp
+            if passed_time > 1000:
+                active_widget.invoke()
+                active_widget = None
+        else:
+            if active_widget:
+                color_widget("systemWindowBackgroundColor")
+            active_widget = hovered_widget
+            color_widget("yellow")
+            timestamp = get_timestamp()
+    else:
+        color_widget("systemWindowBackgroundColor")
+
+    root.after(delay, check_mouse)
+
+
+def color_widget(color):
+    global active_widget
+    active_widget['highlightbackground'] = color
+
+
+def key_press(k):
+    if k == 'Enter':
+        text_input['text'] = ""
+    elif k == 'Backspace':
+        text_input['text'] = text_input['text'][:-1]
+    else:
+        text_input['text'] += k
+    color_widget("red")
+    return
+
+
+def get_timestamp():
+    return int((time.time() - start_time) * 1000)
+
+
+start_time = time.time()
+timestamp = get_timestamp()
+active_widget = None
+timestamp = None
+root = tk.Tk()
+root.title("Canvas")
+root.attributes('-fullscreen', True)
+canvas = tk.Canvas(root)
+canvas.pack(expand='yes', fill='both')
+
+input_frame = tk.Frame(canvas)
+input_frame.pack(side='top', expand='yes', fill='both')
+text_label = tk.Label(input_frame, text="Lorem ipsum dolor est matum. Lorem ipsum....", borderwidth=2, relief="groove")
+text_label.pack(side='top', expand='yes', fill='both')
+text_input = tk.Label(input_frame, text="", borderwidth=2, relief="groove")
+text_input.pack(side='top', expand='yes', fill='both')
+
+keyboard_frame = tk.Frame(canvas)
+keyboard_frame.pack(side='top', expand='yes', fill='both')
+for key_row in keys:
+    store_key_row = tk.Frame(keyboard_frame)
+    store_key_row.pack(side='top', expand='yes', fill='both')
+    for k in key_row:
+        k = k.capitalize()
+        store_key = tk.Button(store_key_row, text=k, width=2, height=2, command=partial(key_press, k))
+        store_key.pack(side='left', fill='both', expand='yes')
+
+root.after(100, check_mouse)
+root.mainloop()
