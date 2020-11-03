@@ -1,102 +1,121 @@
 import time
-from tkinter import *
+import tkinter as tk
+from functools import partial
 
 import tobii_research as tr
 
 
-def getTimeStamp():
-    return int((time.time() - start_time) * 1000)
+def get_time_stamp():
+    return int((time.time() - START_TIME) * 1000)
 
 
-def checkDwellTime(active):
-    global activeLabel
-    global timestamp
-    if active == activeLabel:
-        timePassed = getTimeStamp() - timestamp
-        if timePassed >= 1000:
-            text2Print = "Button " + str(activeLabel + 1) + " was pressed"
-            printText.set(text2Print)
-            timestamp = getTimeStamp()
+def color_widget(color):
+    global active_widget
+    active_widget['highlightbackground'] = color
+
+def log_event(msg):
+    file = open(FILE_NAME, 'a')
+    file.write(msg)
+    file.close()
+
+
+def key_press(k):
+    color_widget("red")
+    log_event('{0}, {1}, null, null, null, null\n'.format(get_time_stamp(), k))
+    if k == 'Enter':
+        text_input['text'] = ""
+    elif k == 'Backspace':
+        text_input['text'] = text_input['text'][:-1]
+    elif k == 'Escape':
+        root.destroy()
+        exit()
     else:
-        activeLabel = active
-        timestamp = getTimeStamp()
+        text_input['text'] += k
+    return
 
 
-def paint(gazedata):
-    left = gazedata['left_gaze_point_on_display_area']
-    right = gazedata['right_gaze_point_on_display_area']
-    gazePoint = ((left[0] + right[0]) / 2, (left[1] + right[1]) / 2)
+def check_gaze(gaze_data):
+    global active_widget
+    global time_stamp
 
-    xOnScreen = gazePoint[0] * canvas.winfo_width()
-    yOnScreen = gazePoint[1] * canvas.winfo_height()
+    left = gaze_data['left_gaze_point_on_display_area']
+    right = gaze_data['right_gaze_point_on_display_area']
+    gaze_point = ((left[0] + right[0]) / 2, (left[1] + right[1]) / 2)
+    x_on_screen = gaze_point[0] * canvas.winfo_width()
+    y_on_screen = gaze_point[1] * canvas.winfo_height()
 
-    canvas.delete("all")
-    python_green = "#476042"
-    x1, y1 = xOnScreen - 20, yOnScreen - 20
-    x2, y2 = xOnScreen + 20, yOnScreen + 20
-    canvas.create_oval(x1, y1, x2, y2, fill=python_green)
-    gazePointText.set("(%.3f/%.3f)" % (gazePoint[0], gazePoint[1]))
+    log_event('{0}, null, {1}, {2}, {3}, {4}\n'.format(get_time_stamp(), gaze_data['left_pupil_diameter'], gaze_data['left_pupil_validity'], gaze_data['right_pupil_diameter'], gaze_data['right_pupil_validity']))
 
-    if gazePoint[0] <= .5:
-        if gazePoint[1] <= 0.5:
-            label1.configure(bg='red')
-            label2.configure(bg='grey')
-            label3.configure(bg='grey')
-            label4.configure(bg='grey')
-            active = 0
+    hovered_widget = root.winfo_containing(x_on_screen, y_on_screen)
+    if type(hovered_widget) == tk.Button:
+        if hovered_widget == active_widget:
+            passed_time = get_time_stamp() - time_stamp
+            if passed_time > DWELL_TIME:
+                active_widget.invoke()
+                active_widget = None
         else:
-            label1.configure(bg='grey')
-            label2.configure(bg='red')
-            label3.configure(bg='grey')
-            label4.configure(bg='grey')
-            active = 1
+            if active_widget:
+                color_widget(COLOR_NEUTRAL)
+            active_widget = hovered_widget
+            color_widget(COLOR_HOVERED)
+            time_stamp = get_time_stamp()
     else:
-        if gazePoint[1] <= 0.5:
-            label1.configure(bg='grey')
-            label2.configure(bg='grey')
-            label3.configure(bg='red')
-            label4.configure(bg='grey')
-            active = 2
-        else:
-            label1.configure(bg='grey')
-            label2.configure(bg='grey')
-            label3.configure(bg='grey')
-            label4.configure(bg='red')
-            active = 3
-    checkDwellTime(active)
+        color_widget(COLOR_NEUTRAL)
 
 
-start_time = time.time()
-timestamp = getTimeStamp()
-activeLabel = 0
+# Variables
+active_widget = None
+time_stamp = None
 
-root = Tk()
+COLOR_NEUTRAL = "systemWindowBackgroundColor"
+COLOR_HOVERED = "yellow"
+COLOR_PRESSED = "red"
+DWELL_TIME = 700;
+START_TIME = time.time()
+FILE_NAME = 'testfile.csv'
+KEYS = [# Key rows
+    ('escape', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '?', '!'),
+    ('q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'ü'),
+    ('a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ö', 'ä'),
+    ('y', 'z', 'c', 'v', 'b', 'n', 'm', ',', '.', 'backspace', 'enter'),
+    " "]
+
+# Setup Tkinter
+root = tk.Tk()
 root.title("Canvas")
 root.attributes('-fullscreen', True)
-canvas = Canvas(root)
-canvas.pack(expand=YES, fill=BOTH)
+canvas = tk.Canvas(root)
+canvas.pack(expand='yes', fill='both')
 
-label1 = Label(canvas, text="Button 1", borderwidth=2, relief="groove")
-label2 = Label(canvas, text="Button 2", borderwidth=2, relief="groove")
-label3 = Label(canvas, text="Button 3", borderwidth=2, relief="groove")
-label4 = Label(canvas, text="Button 4", borderwidth=2, relief="groove")
-label1.place(relwidth=0.5, relheight=0.5)
-label2.place(relwidth=0.5, relheight=0.5, rely=0.5)
-label3.place(relwidth=0.5, relheight=0.5, relx=0.5)
-label4.place(relwidth=0.5, relheight=0.5, relx=0.5, rely=0.5)
+input_frame = tk.Frame(canvas)
+input_frame.pack(side='top', expand='yes', fill='both')
+text_label = tk.Label(input_frame, text="Lorem ipsum dolor est matum. Lorem ipsum....", borderwidth=2, relief="groove")
+text_label.pack(side='top', expand='yes', fill='both')
+text_input = tk.Label(input_frame, text="", borderwidth=2, relief="groove")
+text_input.pack(side='top', expand='yes', fill='both')
 
-gazePointText = StringVar()
-gazePointText.set("Left eye: _ \t Right eye: _")
-gazePointLabel = Label(canvas, textvariable=gazePointText, borderwidth=2, relief="groove")
-gazePointLabel.pack(side=BOTTOM)
 
-printText = StringVar()
-printText.set("")
-printLabel = Label(canvas, textvariable=printText, width=100, borderwidth=2, relief="groove", font=("Courier", 44))
-printLabel.pack(side=TOP)
+# Setup Keyboard
+keyboard_frame = tk.Frame(canvas)
+keyboard_frame.pack(side='top', expand='yes', fill='both')
+for key_row in KEYS:
+    store_key_row = tk.Frame(keyboard_frame)
+    store_key_row.pack(side='top', expand='yes', fill='both')
+    for k in key_row:
+        k = k.capitalize()
+        store_key = tk.Button(store_key_row, text=k, width=2, height=2, command=partial(key_press, k))
+        store_key.pack(side='left', fill='both', expand='yes')
 
+
+# Setup Eyetracker
 found_eyetrackers = tr.find_all_eyetrackers()
 my_eyetracker = found_eyetrackers[0]
-my_eyetracker.subscribe_to(tr.EYETRACKER_GAZE_DATA, paint, as_dictionary=True)
+my_eyetracker.subscribe_to(tr.EYETRACKER_GAZE_DATA, check_gaze, as_dictionary=True)
 
-mainloop()
+
+# Setup Logging
+file = open(FILE_NAME, 'w')
+file.close()
+log_event('time stamp, pressed key,  left pupil size, left pupil validity, right pupil size, right pupil validity\n')
+
+root.mainloop()
