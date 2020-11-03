@@ -1,4 +1,5 @@
 import time
+import platform
 import tkinter as tk
 from functools import partial
 
@@ -9,9 +10,12 @@ def get_time_stamp():
     return int((time.time() - START_TIME) * 1000)
 
 
-def color_widget(color):
-    global active_widget
-    active_widget['highlightbackground'] = color
+def color_widget(widget, color):
+    if PLATTFORM == "Darwin":
+        widget['highlightbackground'] = color
+    else:
+        widget['bg'] = color
+
 
 def log_event(msg):
     file = open(FILE_NAME, 'a')
@@ -20,7 +24,7 @@ def log_event(msg):
 
 
 def key_press(k):
-    color_widget("red")
+    color_widget(active_widget, COLOR_PRESSED)
     log_event('{0}, {1}, null, null, null, null\n'.format(get_time_stamp(), k))
     if k == 'Enter':
         text_input['text'] = ""
@@ -55,24 +59,25 @@ def check_gaze(gaze_data):
                 active_widget = None
         else:
             if active_widget:
-                color_widget(COLOR_NEUTRAL)
+                color_widget(active_widget, COLOR_NEUTRAL)
             active_widget = hovered_widget
-            color_widget(COLOR_HOVERED)
+            color_widget(active_widget, COLOR_HOVERED)
             time_stamp = get_time_stamp()
     else:
-        color_widget(COLOR_NEUTRAL)
+        color_widget(active_widget, COLOR_NEUTRAL)
 
 
 # Variables
 active_widget = None
 time_stamp = None
 
-COLOR_NEUTRAL = "systemWindowBackgroundColor"
+COLOR_NEUTRAL = "grey"
 COLOR_HOVERED = "yellow"
 COLOR_PRESSED = "red"
-DWELL_TIME = 700;
+DWELL_TIME = 700
 START_TIME = time.time()
 FILE_NAME = 'testfile.csv'
+PLATTFORM = platform.system()
 KEYS = [# Key rows
     ('escape', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '?', '!'),
     ('q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'ü'),
@@ -105,6 +110,8 @@ for key_row in KEYS:
         k = k.capitalize()
         store_key = tk.Button(store_key_row, text=k, width=2, height=2, command=partial(key_press, k))
         store_key.pack(side='left', fill='both', expand='yes')
+        color_widget(store_key, COLOR_NEUTRAL)
+
 
 
 # Setup Eyetracker
