@@ -1,0 +1,102 @@
+import time
+from tkinter import *
+
+import tobii_research as tr
+
+
+def getTimeStamp():
+    return int((time.time() - start_time) * 1000)
+
+
+def checkDwellTime(active):
+    global activeLabel
+    global timestamp
+    if active == activeLabel:
+        timePassed = getTimeStamp() - timestamp
+        if timePassed >= 1000:
+            text2Print = "Button " + str(activeLabel + 1) + " was pressed"
+            printText.set(text2Print)
+            timestamp = getTimeStamp()
+    else:
+        activeLabel = active
+        timestamp = getTimeStamp()
+
+
+def paint(gazedata):
+    left = gazedata['left_gaze_point_on_display_area']
+    right = gazedata['right_gaze_point_on_display_area']
+    gazePoint = ((left[0] + right[0]) / 2, (left[1] + right[1]) / 2)
+
+    xOnScreen = gazePoint[0] * canvas.winfo_width()
+    yOnScreen = gazePoint[1] * canvas.winfo_height()
+
+    canvas.delete("all")
+    python_green = "#476042"
+    x1, y1 = xOnScreen - 20, yOnScreen - 20
+    x2, y2 = xOnScreen + 20, yOnScreen + 20
+    canvas.create_oval(x1, y1, x2, y2, fill=python_green)
+    gazePointText.set("(%.3f/%.3f)" % (gazePoint[0], gazePoint[1]))
+
+    if gazePoint[0] <= .5:
+        if gazePoint[1] <= 0.5:
+            label1.configure(bg='red')
+            label2.configure(bg='grey')
+            label3.configure(bg='grey')
+            label4.configure(bg='grey')
+            active = 0
+        else:
+            label1.configure(bg='grey')
+            label2.configure(bg='red')
+            label3.configure(bg='grey')
+            label4.configure(bg='grey')
+            active = 1
+    else:
+        if gazePoint[1] <= 0.5:
+            label1.configure(bg='grey')
+            label2.configure(bg='grey')
+            label3.configure(bg='red')
+            label4.configure(bg='grey')
+            active = 2
+        else:
+            label1.configure(bg='grey')
+            label2.configure(bg='grey')
+            label3.configure(bg='grey')
+            label4.configure(bg='red')
+            active = 3
+    checkDwellTime(active)
+
+
+start_time = time.time()
+timestamp = getTimeStamp()
+activeLabel = 0
+
+root = Tk()
+root.title("Canvas")
+root.attributes('-fullscreen', True)
+canvas = Canvas(root)
+canvas.pack(expand=YES, fill=BOTH)
+
+label1 = Label(canvas, text="Button 1", borderwidth=2, relief="groove")
+label2 = Label(canvas, text="Button 2", borderwidth=2, relief="groove")
+label3 = Label(canvas, text="Button 3", borderwidth=2, relief="groove")
+label4 = Label(canvas, text="Button 4", borderwidth=2, relief="groove")
+label1.place(relwidth=0.5, relheight=0.5)
+label2.place(relwidth=0.5, relheight=0.5, rely=0.5)
+label3.place(relwidth=0.5, relheight=0.5, relx=0.5)
+label4.place(relwidth=0.5, relheight=0.5, relx=0.5, rely=0.5)
+
+gazePointText = StringVar()
+gazePointText.set("Left eye: _ \t Right eye: _")
+gazePointLabel = Label(canvas, textvariable=gazePointText, borderwidth=2, relief="groove")
+gazePointLabel.pack(side=BOTTOM)
+
+printText = StringVar()
+printText.set("")
+printLabel = Label(canvas, textvariable=printText, width=100, borderwidth=2, relief="groove", font=("Courier", 44))
+printLabel.pack(side=TOP)
+
+found_eyetrackers = tr.find_all_eyetrackers()
+my_eyetracker = found_eyetrackers[0]
+my_eyetracker.subscribe_to(tr.EYETRACKER_GAZE_DATA, paint, as_dictionary=True)
+
+mainloop()
