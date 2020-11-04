@@ -1,30 +1,32 @@
 import time
-import platform
 import tkinter as tk
 from functools import partial
+import constant
 
 import tobii_research as tr
 
 
 def get_time_stamp():
-    return int((time.time() - START_TIME) * 1000)
+    return int((time.time() - constant.START_TIME) * 1000)
 
 
 def color_widget(widget, color):
-    if PLATTFORM == "Darwin":
+    if constant.PLATTFORM == "Darwin":
         widget['highlightbackground'] = color
     else:
         widget['bg'] = color
 
 
 def log_event(msg):
-    file = open(FILE_NAME, 'a')
+    file = open(constant.FILE_NAME, 'a')
     file.write(msg)
     file.close()
 
 
 def key_press(k):
-    color_widget(active_widget, COLOR_PRESSED)
+    global key_pressed
+    key_pressed = True
+    color_widget(selected_widget, constant.COLOR_PRESSED)
     log_event('{0}, {1}, null, null, null, null\n'.format(get_time_stamp(), k))
     if k == 'Enter':
         text_input['text'] = ""
@@ -39,8 +41,9 @@ def key_press(k):
 
 
 def check_gaze(gaze_data):
-    global active_widget
-    global time_stamp
+    global selected_widget
+    global selection_time
+    global key_pressed
 
     left = gaze_data['left_gaze_point_on_display_area']
     right = gaze_data['right_gaze_point_on_display_area']
@@ -51,39 +54,30 @@ def check_gaze(gaze_data):
     log_event('{0}, null, {1}, {2}, {3}, {4}\n'.format(get_time_stamp(), gaze_data['left_pupil_diameter'], gaze_data['left_pupil_validity'], gaze_data['right_pupil_diameter'], gaze_data['right_pupil_validity']))
 
     hovered_widget = root.winfo_containing(x_on_screen, y_on_screen)
-    if type(hovered_widget) == tk.Button:
-        if hovered_widget == active_widget:
-            passed_time = get_time_stamp() - time_stamp
-            if passed_time > DWELL_TIME:
-                active_widget.invoke()
-                active_widget = None
+
+    if not key_pressed:
+        if type(hovered_widget) == tk.Button:
+            if hovered_widget == selected_widget:
+                if (get_time_stamp() - selection_time) > constant.DWELL_TIME:
+                    selected_widget.invoke()
+            else:
+                if selected_widget:
+                    color_widget(selected_widget, constant.COLOR_NEUTRAL)
+                selected_widget = hovered_widget
+                color_widget(selected_widget, constant.COLOR_HOVERED)
+                selection_time = get_time_stamp()
         else:
-            if active_widget:
-                color_widget(active_widget, COLOR_NEUTRAL)
-            active_widget = hovered_widget
-            color_widget(active_widget, COLOR_HOVERED)
-            time_stamp = get_time_stamp()
-    else:
-        color_widget(active_widget, COLOR_NEUTRAL)
+            color_widget(selected_widget, constant.COLOR_NEUTRAL)
+    elif get_time_stamp() - selection_time >= constant.DWELL_TIME + constant.PAUSE_TIME:
+        key_pressed = False
+        color_widget(selected_widget, constant.COLOR_NEUTRAL)
+        selected_widget = None
 
 
 # Variables
-active_widget = None
-time_stamp = None
-
-COLOR_NEUTRAL = "grey"
-COLOR_HOVERED = "yellow"
-COLOR_PRESSED = "red"
-DWELL_TIME = 700
-START_TIME = time.time()
-FILE_NAME = 'testfile.csv'
-PLATTFORM = platform.system()
-KEYS = [# Key rows
-    ('escape', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '?', '!'),
-    ('q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'ü'),
-    ('a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ö', 'ä'),
-    ('y', 'z', 'c', 'v', 'b', 'n', 'm', ',', '.', 'backspace', 'enter'),
-    " "]
+selected_widget = None
+selection_time = None
+key_pressed = False
 
 # Setup Tkinter
 root = tk.Tk()
@@ -103,14 +97,14 @@ text_input.pack(side='top', expand='yes', fill='both')
 # Setup Keyboard
 keyboard_frame = tk.Frame(canvas)
 keyboard_frame.pack(side='top', expand='yes', fill='both')
-for key_row in KEYS:
+for key_row in constant.KEYS:
     store_key_row = tk.Frame(keyboard_frame)
     store_key_row.pack(side='top', expand='yes', fill='both')
     for k in key_row:
         k = k.capitalize()
         store_key = tk.Button(store_key_row, text=k, width=2, height=2, command=partial(key_press, k))
         store_key.pack(side='left', fill='both', expand='yes')
-        color_widget(store_key, COLOR_NEUTRAL)
+        color_widget(store_key, constant.COLOR_NEUTRAL)
 
 
 
@@ -121,8 +115,7 @@ my_eyetracker.subscribe_to(tr.EYETRACKER_GAZE_DATA, check_gaze, as_dictionary=Tr
 
 
 # Setup Logging
-file = open(FILE_NAME, 'w')
-file.close()
+open(constant.FILE_NAME, 'w').close()
 log_event('time stamp, pressed key,  left pupil size, left pupil validity, right pupil size, right pupil validity\n')
 
 root.mainloop()
