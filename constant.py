@@ -1,17 +1,20 @@
 import time
 import platform
 
-COLOR_NEUTRAL = "grey"
+COLOR_NEUTRAL = "slate gray"
 COLOR_HOVERED = "yellow"
 COLOR_PRESSED = "red"
 DWELL_TIME = 700
 PAUSE_TIME = 500
 START_TIME = time.time()
-FILE_NAME = 'testfile.csv'
+LOG_FILE_GAZE = 'Log_Files/LogGaze.csv'
+LOG_FILE_KEYS = 'Log_Files/LogKeys.csv'
+FILE_PHRASES = 'phrases.txt'
 PLATFORM = platform.system()
-KEYS = [# Key rows
-    ('escape', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '?', '!'),
-    ('q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'ü'),
-    ('a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ö', 'ä'),
-    ('y', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', 'backspace', 'enter'),
-    " "]
+TOTAL_TIME = 5000
+
+KEYS_QWERTY = [  # Key rows
+    ('q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'back'),
+    ('a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'),
+    ('z', 'x', 'c', 'v', 'b', 'n', 'm', 'space', 'enter')
+]
