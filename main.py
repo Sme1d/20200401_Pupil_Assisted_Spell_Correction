@@ -52,12 +52,13 @@ def load_phrases():
 
 def setup_keyboard():
     for i in range(0, len(constant.KEYS_QWERTY)):
-        store_key_row = tk.Canvas(frame)
+        store_key_row = tk.Canvas(frame, bg=constant.COLOR_BACKGROUND, highlightthickness=0)
         store_key_row.pack(anchor='center')
 
         # Placeholder to indent key rows according to physical layout
-        placeholder = tk.Canvas(store_key_row, width=(56 * i - 33), height=40)
-        placeholder.pack(side='left')
+        placeholder = tk.Canvas(store_key_row, width=(56 * i - 33), height=50, bg=constant.COLOR_BACKGROUND, highlightthickness=0)
+        placeholder.pack(side='left', fill='y')
+        #color_widget(placeholder, constant.COLOR_BACKGROUND)
 
         for k in constant.KEYS_QWERTY[i]:
             k = k.capitalize()
@@ -170,17 +171,17 @@ key_pressed = False
 root = tk.Tk()
 root.title("Gaze Typing")
 root.attributes('-fullscreen', True)
-canvas = tk.Canvas(root, highlightthickness=0)
+canvas = tk.Canvas(root, highlightthickness=0, bg=constant.COLOR_BACKGROUND)
 canvas.pack(fill='both', expand='yes')
 
 # Setup Input
 font_keys = tk_font.Font(size=24)
 font_input = tk_font.Font(size=20)
 
-frame = tk.Frame(canvas)
+frame = tk.Frame(canvas, bg=constant.COLOR_BACKGROUND)
 frame.pack(fill="none", expand=True)
 
-text_label = tk.Label(frame, width=50, fg='white', font=font_input)
+text_label = tk.Label(frame, width=50, fg='white', bg=constant.COLOR_BACKGROUND, font=font_input)
 text_label.pack(side='top', padx=(10, 0), pady=(15, 0))
 text_entry = tk.Entry(frame, bg='white', justify='center', fg='black',
                       insertbackground='black',
@@ -192,7 +193,7 @@ setup_log_files()
 phrases = load_phrases()
 load_new_phrase()
 setup_keyboard()
-setup_eyetracker()
+#setup_eyetracker()
 
 # Finish application after defined time
 root.after(constant.TOTAL_TIME, finish)
