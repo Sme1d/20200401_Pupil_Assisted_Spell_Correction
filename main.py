@@ -25,8 +25,10 @@ def key_press(key):
         text_entry.delete(0, 'end')
     elif key == 'Back':
         text_entry.delete(len(text_entry.get()) - 1)
+    elif key == 'Space':
+        text_entry.insert('end', ' ')
     else:
-        text_entry.insert(0, key.lower())
+        text_entry.insert('end', key.lower())
 
 
 def setup_log_files():
@@ -50,8 +52,8 @@ def load_phrases():
 
 def setup_keyboard():
     for i in range(0, len(constant.KEYS_QWERTY)):
-        store_key_row = tk.Canvas(canvas)
-        store_key_row.pack(side='top', fill='both')
+        store_key_row = tk.Canvas(frame)
+        store_key_row.pack(anchor='center')
 
         # Placeholder to indent key rows according to physical layout
         placeholder = tk.Canvas(store_key_row, width=(56 * i - 33), height=40)
@@ -120,8 +122,8 @@ def check_gaze(gaze_data):
 
     log_gaze_event(gaze_data)
     gaze_point = get_gaze_point_on_screen(gaze_data)
-    hovered_widget = root.winfo_containing(gaze_point[0], gaze_point[1])
 
+    hovered_widget = root.winfo_containing(gaze_point[0], gaze_point[1])
     if not key_pressed:
         if type(hovered_widget) == tk.Button:
             if hovered_widget == selected_widget:
@@ -154,8 +156,8 @@ def check_gaze(gaze_data):
 
 
 def finish():
-    # found_eyetrackers = tr.find_all_eyetrackers()
-    # found_eyetrackers[0].unsubscribe_from(r.EYETRACKER_GAZE_DATA, check_gaze)
+    #found_eyetrackers = tr.find_all_eyetrackers()
+    #found_eyetrackers[0].unsubscribe_from(tr.EYETRACKER_GAZE_DATA, check_gaze)
     root.destroy()
 
 
@@ -168,17 +170,19 @@ key_pressed = False
 root = tk.Tk()
 root.title("Gaze Typing")
 root.attributes('-fullscreen', True)
-frame = tk.Frame(root)
-frame.place(relx=0.5, rely=0.5, anchor='center')
-canvas = tk.Canvas(frame, highlightthickness=0)
-canvas.pack()
+canvas = tk.Canvas(root, highlightthickness=0)
+canvas.pack(fill='both', expand='yes')
 
+# Setup Input
 font_keys = tk_font.Font(size=24)
 font_input = tk_font.Font(size=20)
 
-text_label = tk.Label(canvas, width=50, fg='white', font=font_input)
+frame = tk.Frame(canvas)
+frame.pack(fill="none", expand=True)
+
+text_label = tk.Label(frame, width=50, fg='white', font=font_input)
 text_label.pack(side='top', padx=(10, 0), pady=(15, 0))
-text_entry = tk.Entry(canvas, bg='white', justify='center', fg='black',
+text_entry = tk.Entry(frame, bg='white', justify='center', fg='black',
                       insertbackground='black',
                       font=font_input)
 text_entry.pack(side='top', padx=(2, 0), pady=(0, 15))
@@ -188,7 +192,7 @@ setup_log_files()
 phrases = load_phrases()
 load_new_phrase()
 setup_keyboard()
-# setup_eyetracker()
+setup_eyetracker()
 
 # Finish application after defined time
 root.after(constant.TOTAL_TIME, finish)
