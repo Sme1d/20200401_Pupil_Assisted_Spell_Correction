@@ -62,8 +62,8 @@ def setup_keyboard():
 
         for k in constant.KEYS_QWERTY[i]:
             k = k.capitalize()
-            store_key = tk.Button(store_key_row, text=k, width=5, height=3, bd=0, highlightthickness=0, font=font_keys,
-                                  command=partial(key_press, k))
+            store_key = tk.Button(store_key_row, text=k, width=4, height=3, bd=0, highlightthickness=0, font=font_keys,
+                                  command=partial(key_press, k), fg=constant.COLOR_HIGHLIGHT)
 
             if k == 'Enter' or k == 'Back':
                 store_key.pack(side='right', padx=(20, 0), pady=(0, 3))
@@ -181,9 +181,9 @@ font_input = tk_font.Font(size=20)
 frame = tk.Frame(canvas, bg=constant.COLOR_BACKGROUND)
 frame.pack(fill="none", expand=True)
 
-text_label = tk.Label(frame, width=50, fg='white', bg=constant.COLOR_BACKGROUND, font=font_input)
+text_label = tk.Label(frame, width=50, fg=constant.COLOR_HIGHLIGHT, bg=constant.COLOR_BACKGROUND, font=font_input)
 text_label.pack(side='top', padx=(10, 0), pady=(15, 0))
-text_entry = tk.Entry(frame, bg='white', justify='center', fg='black',
+text_entry = tk.Entry(frame, bg=constant.COLOR_HIGHLIGHT, justify='center', fg='black',
                       insertbackground='black',
                       font=font_input)
 text_entry.pack(side='top', padx=(2, 0), pady=(0, 15))
@@ -193,7 +193,7 @@ setup_log_files()
 phrases = load_phrases()
 load_new_phrase()
 setup_keyboard()
-#setup_eyetracker()
+setup_eyetracker()
 
 # Finish application after defined time
 root.after(constant.TOTAL_TIME, finish)

@@ -1,10 +1,11 @@
 import time
 import platform
 
-COLOR_NEUTRAL = 'grey10'
+COLOR_NEUTRAL = 'grey5'
 COLOR_HOVERED = 'yellow'
 COLOR_PRESSED = 'red'
-COLOR_BACKGROUND = 'grey7'
+COLOR_BACKGROUND = 'grey0'
+COLOR_HIGHLIGHT = 'white'
 DWELL_TIME = 700
 PAUSE_TIME = 500
 START_TIME = time.time()
