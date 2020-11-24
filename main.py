@@ -24,13 +24,13 @@ def key_press(key):
     log_key_event('Key Press', key)
     if key == 'Enter':
         load_new_phrase()
-        text_entry.delete(0, 'end')
+        input_entry.delete(0, 'end')
     elif key == 'Back':
-        text_entry.delete(len(text_entry.get()) - 1)
+        input_entry.delete(len(input_entry.get()) - 1)
     elif key == 'Space':
-        text_entry.insert('end', ' ')
+        input_entry.insert('end', ' ')
     else:
-        text_entry.insert('end', key.lower())
+        input_entry.insert('end', key.lower())
 
 
 def setup_input():
@@ -44,6 +44,45 @@ def setup_input():
     entry.pack(side='top', pady=(0, 15))
     entry.focus_set()
     return label, entry
+
+
+def setup_input2():
+    global input_entry
+    global input_label
+    global dwell_time_label
+
+    input_frame = tk.Frame(frame, bg=constant.COLOR_BACKGROUND)
+    input_frame.pack(side='top', fill='both', pady=(0, 15))
+
+    left_frame = tk.Frame(input_frame, bg=constant.COLOR_BACKGROUND)
+    left_frame.pack(side='left')
+
+    font_input = tk_font.Font(size=20)
+    input_label = tk.Label(left_frame, fg=constant.COLOR_HIGHLIGHT, bg=constant.COLOR_BACKGROUND, font=font_input)
+    input_label.pack(side='top', padx=(6, 0), anchor='w', pady=(15, 0))
+
+    input_entry = tk.Entry(left_frame, width=40, bg=constant.COLOR_HIGHLIGHT, fg='black',
+                           insertbackground='black',
+                           font=font_input)
+    input_entry.pack(side='top', padx=(6, 0))
+    input_entry.focus_set()
+
+    dwell_time_frame = tk.Frame(input_frame, bg=constant.COLOR_BACKGROUND)
+    dwell_time_frame.pack(side='right', anchor='s')
+
+    minus_button = tk.Button(dwell_time_frame, text='-50ms', width=4, height=2, bd=0, highlightthickness=0,
+                             font=font_input, bg=constant.COLOR_BACKGROUND, fg=constant.COLOR_HIGHLIGHT,
+                             command=partial(change_dwell_time, -50))
+    dwell_time_label = tk.Label(dwell_time_frame, fg=constant.COLOR_HIGHLIGHT, bg=constant.COLOR_BACKGROUND,
+                                font=font_input, text=str(constant.START_DWELL_TIME) + 'ms')
+    plus_button = tk.Button(dwell_time_frame, text='+50ms', width=4, height=2, bd=0, highlightthickness=0,
+                            font=font_input, bg=constant.COLOR_BACKGROUND, fg=constant.COLOR_HIGHLIGHT,
+                            command=partial(change_dwell_time, 50))
+    minus_button.pack(side='left', padx=(0, 7))
+    dwell_time_label.pack(side='left', padx=(0, 7))
+    plus_button.pack(side='left')
+    color_widget(minus_button, constant.COLOR_NEUTRAL)
+    color_widget(plus_button, constant.COLOR_NEUTRAL)
 
 
 def setup_log_files():
@@ -65,6 +104,13 @@ def setup_log_files():
     log_file_gaze.write(', gaze point, , gaze point validity, , pupil size, , pupil validity\n')
     log_file_gaze.write('time, X, Y, L, R, L, R, L, R\n')
     log_file_gaze.close()
+
+
+def change_dwell_time(change_value):
+    global dwell_time
+    dwell_time += change_value
+    dwell_time_label['text'] = str(dwell_time) + 'ms'
+    print(dwell_time)
 
 
 # Load Phrases
@@ -114,7 +160,7 @@ def load_new_phrase():
 
     new_phrase = phrases.pop(0)
     new_phrase = new_phrase[0:len(new_phrase) - 1]
-    text_label['text'] = new_phrase
+    input_label['text'] = new_phrase
 
 
 def log_gaze_event(gaze_data):
@@ -131,8 +177,8 @@ def log_gaze_event(gaze_data):
 def log_key_event(event, related_key):
     file = open(file_path + constant.LOG_FILE_KEYS, 'a')
     file.write(
-        '{0}, {1}, {2}, {3}, {4}\n'.format(get_time_stamp(), event, related_key, text_label['text'],
-                                           text_entry.get()))
+        '{0}, {1}, {2}, {3}, {4}\n'.format(get_time_stamp(), event, related_key, input_label['text'],
+                                           input_entry.get()))
     file.close()
 
 
@@ -156,7 +202,7 @@ def check_gaze(gaze_data):
     if not key_pressed:
         if type(hovered_widget) == tk.Button:
             if hovered_widget == selected_widget:
-                if (get_time_stamp() - selection_time) > constant.DWELL_TIME:
+                if (get_time_stamp() - selection_time) > dwell_time:
                     # key press
                     selected_widget.invoke()
                     key_pressed = True
@@ -175,7 +221,7 @@ def check_gaze(gaze_data):
             # Deselect previously selected key
             color_widget(selected_widget, constant.COLOR_NEUTRAL)
             log_key_event('Key Deselected', selected_widget['text'])
-    elif get_time_stamp() - selection_time >= constant.DWELL_TIME + constant.PAUSE_TIME:
+    elif get_time_stamp() - selection_time >= dwell_time + constant.PAUSE_TIME:
         # End selection pause
         key_pressed = False
         color_widget(selected_widget, constant.COLOR_NEUTRAL)
@@ -194,6 +240,10 @@ selected_widget = None
 selection_time = None
 key_pressed = False
 file_path = ''
+dwell_time = constant.START_DWELL_TIME
+input_label = None
+input_entry = None
+dwell_time_label = None
 
 # Setup Tkinter
 root = tk.Tk()
@@ -204,13 +254,14 @@ canvas.pack(fill='both', expand=True)
 frame = tk.Frame(canvas, bg=constant.COLOR_BACKGROUND)
 frame.pack(fill="none", expand=True)
 
-text_label, text_entry = setup_input()
+# setup_input()
+setup_input2()
 
 setup_log_files()
 phrases = load_phrases()
 load_new_phrase()
 setup_keyboard()
-setup_eyetracker()
+# setup_eyetracker()
 
 # Finish application after defined time
 root.after(constant.TOTAL_TIME, finish)
