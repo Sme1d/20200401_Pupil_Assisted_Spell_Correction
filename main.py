@@ -2,6 +2,7 @@ import time
 import tkinter as tk
 import tkinter.font as tk_font
 from functools import partial
+import os
 
 import tobii_research as tr
 
@@ -20,6 +21,7 @@ def color_widget(widget, color):
 
 
 def key_press(key):
+    log_key_event('Key Press', key)
     if key == 'Enter':
         load_new_phrase()
         text_entry.delete(0, 'end')
@@ -31,12 +33,35 @@ def key_press(key):
         text_entry.insert('end', key.lower())
 
 
+def setup_input():
+    font_input = tk_font.Font(size=20)
+    label = tk.Label(frame, fg=constant.COLOR_HIGHLIGHT, bg=constant.COLOR_BACKGROUND, font=font_input)
+    label.pack(side='top', pady=(15, 0))
+
+    entry = tk.Entry(frame, width=40, bg=constant.COLOR_HIGHLIGHT, justify='center', fg='black',
+                     insertbackground='black',
+                     font=font_input)
+    entry.pack(side='top', pady=(0, 15))
+    entry.focus_set()
+    return label, entry
+
+
 def setup_log_files():
-    log_file_keys = open(constant.LOG_FILE_KEYS, 'w')
+    global file_path
+
+    participant_number = str(len(os.listdir(constant.LOG_FILE_PATH)))
+
+    for i in range(3 - len(participant_number)):
+        participant_number = '0' + participant_number
+
+    file_path = constant.LOG_FILE_PATH + 'P' + participant_number
+    os.mkdir(file_path)
+
+    log_file_keys = open(file_path + constant.LOG_FILE_KEYS, 'w')
     log_file_keys.write('time, event, related key, current phrase, current input\n')
     log_file_keys.close()
 
-    log_file_gaze = open(constant.LOG_FILE_GAZE, 'w')
+    log_file_gaze = open(file_path + constant.LOG_FILE_GAZE, 'w')
     log_file_gaze.write(', gaze point, , gaze point validity, , pupil size, , pupil validity\n')
     log_file_gaze.write('time, X, Y, L, R, L, R, L, R\n')
     log_file_gaze.close()
@@ -51,14 +76,17 @@ def load_phrases():
 
 
 def setup_keyboard():
+    font_keys = tk_font.Font(size=24)
+
     for i in range(0, len(constant.KEYS_QWERTY)):
         store_key_row = tk.Canvas(frame, bg=constant.COLOR_BACKGROUND, highlightthickness=0)
         store_key_row.pack(anchor='center')
 
         # Placeholder to indent key rows according to physical layout
-        placeholder = tk.Canvas(store_key_row, width=(56 * i - 33), height=50, bg=constant.COLOR_BACKGROUND, highlightthickness=0)
+        placeholder = tk.Canvas(store_key_row, width=(56 * i - 33), height=50, bg=constant.COLOR_BACKGROUND,
+                                highlightthickness=0)
         placeholder.pack(side='left', fill='y')
-        #color_widget(placeholder, constant.COLOR_BACKGROUND)
+        # color_widget(placeholder, constant.COLOR_BACKGROUND)
 
         for k in constant.KEYS_QWERTY[i]:
             k = k.capitalize()
@@ -85,12 +113,12 @@ def load_new_phrase():
     log_key_event('New Phrase', None)
 
     new_phrase = phrases.pop(0)
-    new_phrase = new_phrase[0:len(new_phrase) - 3]
+    new_phrase = new_phrase[0:len(new_phrase) - 1]
     text_label['text'] = new_phrase
 
 
 def log_gaze_event(gaze_data):
-    file = open(constant.LOG_FILE_GAZE, 'a')
+    file = open(file_path + constant.LOG_FILE_GAZE, 'a')
     gaze_point = get_gaze_point_on_screen(gaze_data)
     file.write('{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}\n'.format(
         get_time_stamp(), gaze_point[0], gaze_point[1],
@@ -101,7 +129,7 @@ def log_gaze_event(gaze_data):
 
 
 def log_key_event(event, related_key):
-    file = open(constant.LOG_FILE_KEYS, 'a')
+    file = open(file_path + constant.LOG_FILE_KEYS, 'a')
     file.write(
         '{0}, {1}, {2}, {3}, {4}\n'.format(get_time_stamp(), event, related_key, text_label['text'],
                                            text_entry.get()))
@@ -133,7 +161,6 @@ def check_gaze(gaze_data):
                     selected_widget.invoke()
                     key_pressed = True
                     color_widget(selected_widget, constant.COLOR_PRESSED)
-                    log_key_event('Key Press', selected_widget['text'])
             else:
                 if selected_widget:
                     # Deselect previously selected key
@@ -157,8 +184,8 @@ def check_gaze(gaze_data):
 
 
 def finish():
-    #found_eyetrackers = tr.find_all_eyetrackers()
-    #found_eyetrackers[0].unsubscribe_from(tr.EYETRACKER_GAZE_DATA, check_gaze)
+    # found_eyetrackers = tr.find_all_eyetrackers()
+    # found_eyetrackers[0].unsubscribe_from(tr.EYETRACKER_GAZE_DATA, check_gaze)
     root.destroy()
 
 
@@ -166,28 +193,18 @@ def finish():
 selected_widget = None
 selection_time = None
 key_pressed = False
+file_path = ''
 
 # Setup Tkinter
 root = tk.Tk()
 root.title("Gaze Typing")
 root.attributes('-fullscreen', True)
 canvas = tk.Canvas(root, highlightthickness=0, bg=constant.COLOR_BACKGROUND)
-canvas.pack(fill='both', expand='yes')
-
-# Setup Input
-font_keys = tk_font.Font(size=24)
-font_input = tk_font.Font(size=20)
-
+canvas.pack(fill='both', expand=True)
 frame = tk.Frame(canvas, bg=constant.COLOR_BACKGROUND)
 frame.pack(fill="none", expand=True)
 
-text_label = tk.Label(frame, width=50, fg=constant.COLOR_HIGHLIGHT, bg=constant.COLOR_BACKGROUND, font=font_input)
-text_label.pack(side='top', padx=(10, 0), pady=(15, 0))
-text_entry = tk.Entry(frame, bg=constant.COLOR_HIGHLIGHT, justify='center', fg='black',
-                      insertbackground='black',
-                      font=font_input)
-text_entry.pack(side='top', padx=(2, 0), pady=(0, 15))
-text_entry.focus_set()
+text_label, text_entry = setup_input()
 
 setup_log_files()
 phrases = load_phrases()
