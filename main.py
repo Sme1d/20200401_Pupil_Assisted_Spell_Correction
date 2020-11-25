@@ -3,6 +3,7 @@ import tkinter as tk
 import tkinter.font as tk_font
 from functools import partial
 import os
+from pathlib import  Path
 
 import tobii_research as tr
 
@@ -109,19 +110,21 @@ def setup_input2():
 def setup_log_files():
     global file_path
 
-    participant_number = str(len(os.listdir(constant.LOG_FILE_PATH)))
+    participant_number = str(len(os.listdir(constant.LOG_FILE_FOLDER)))
 
     for i in range(3 - len(participant_number)):
         participant_number = '0' + participant_number
 
-    file_path = constant.LOG_FILE_PATH + 'P' + participant_number
+    participant_number = 'P' + participant_number
+
+    file_path = constant.LOG_FILE_FOLDER / participant_number
     os.mkdir(file_path)
 
-    log_file_keys = open(file_path + constant.LOG_FILE_KEYS, 'w')
+    log_file_keys = open(file_path / constant.LOG_FILE_KEYS, 'w')
     log_file_keys.write('time, event, related key, current phrase, current input\n')
     log_file_keys.close()
 
-    log_file_gaze = open(file_path + constant.LOG_FILE_GAZE, 'w')
+    log_file_gaze = open(file_path / constant.LOG_FILE_GAZE, 'w')
     log_file_gaze.write(', gaze point, , gaze point validity, , pupil size, , pupil validity\n')
     log_file_gaze.write('time, X, Y, L, R, L, R, L, R\n')
     log_file_gaze.close()
@@ -183,7 +186,7 @@ def load_new_phrase():
 
 
 def log_gaze_event(gaze_data):
-    file = open(file_path + constant.LOG_FILE_GAZE, 'a')
+    file = open(file_path / constant.LOG_FILE_GAZE, 'a')
     gaze_point = get_gaze_point_on_screen(gaze_data)
     file.write('{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}\n'.format(
         get_time_stamp(), gaze_point[0], gaze_point[1],
@@ -194,7 +197,7 @@ def log_gaze_event(gaze_data):
 
 
 def log_key_event(event, related_key):
-    file = open(file_path + constant.LOG_FILE_KEYS, 'a')
+    file = open(file_path / constant.LOG_FILE_KEYS, 'a')
     file.write(
         '{0}, {1}, {2}, {3}, {4}\n'.format(get_time_stamp(), event, related_key, input_label['text'],
                                            input_entry.get()))
@@ -285,6 +288,6 @@ setup_log_files()
 phrases = load_phrases()
 # load_new_phrase()
 setup_keyboard()
-setup_eyetracker()
+# setup_eyetracker()
 
 root.mainloop()
