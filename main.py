@@ -21,16 +21,36 @@ def color_widget(widget, color):
 
 
 def key_press(key):
+    global is_typing
+
     log_key_event('Key Press', key)
     if key == 'Enter':
         load_new_phrase()
         input_entry.delete(0, 'end')
-    elif key == 'Back':
-        input_entry.delete(len(input_entry.get()) - 1)
-    elif key == 'Space':
-        input_entry.insert('end', ' ')
+        switch_typing(False)
     else:
-        input_entry.insert('end', key.lower())
+        switch_typing(True)
+        if key == 'Back':
+            input_entry.delete(len(input_entry.get()) - 1)
+        elif key == 'Space':
+            input_entry.insert('end', ' ')
+        else:
+            input_entry.insert('end', key.lower())
+
+def switch_typing(value):
+    global is_typing
+    global typing_time_stamp
+    global overall_typing_time
+
+    if is_typing != value:
+        is_typing = value
+        if is_typing:
+            typing_time_stamp = get_time_stamp()
+        else:
+            overall_typing_time += get_time_stamp() - typing_time_stamp
+            print(overall_typing_time)
+            if overall_typing_time >= constant.TYPING_TIME:
+                finish()
 
 
 def setup_input():
@@ -58,7 +78,8 @@ def setup_input2():
     left_frame.pack(side='left')
 
     font_input = tk_font.Font(size=20)
-    input_label = tk.Label(left_frame, fg=constant.COLOR_HIGHLIGHT, bg=constant.COLOR_BACKGROUND, font=font_input)
+    input_label = tk.Label(left_frame, fg=constant.COLOR_HIGHLIGHT, bg=constant.COLOR_BACKGROUND, font=font_input,
+                           text='Find a dwell time which suits you')
     input_label.pack(side='top', padx=(6, 0), anchor='w', pady=(15, 0))
 
     input_entry = tk.Entry(left_frame, width=40, bg=constant.COLOR_HIGHLIGHT, fg='black',
@@ -110,7 +131,6 @@ def change_dwell_time(change_value):
     global dwell_time
     dwell_time += change_value
     dwell_time_label['text'] = str(dwell_time) + 'ms'
-    print(dwell_time)
 
 
 # Load Phrases
@@ -132,7 +152,6 @@ def setup_keyboard():
         placeholder = tk.Canvas(store_key_row, width=(56 * i - 33), height=50, bg=constant.COLOR_BACKGROUND,
                                 highlightthickness=0)
         placeholder.pack(side='left', fill='y')
-        # color_widget(placeholder, constant.COLOR_BACKGROUND)
 
         for k in constant.KEYS_QWERTY[i]:
             k = k.capitalize()
@@ -241,9 +260,14 @@ selection_time = None
 key_pressed = False
 file_path = ''
 dwell_time = constant.START_DWELL_TIME
+is_typing = False
+overall_typing_time = 0
+typing_time_stamp = 0
+
 input_label = None
 input_entry = None
 dwell_time_label = None
+
 
 # Setup Tkinter
 root = tk.Tk()
@@ -259,10 +283,8 @@ setup_input2()
 
 setup_log_files()
 phrases = load_phrases()
-load_new_phrase()
+# load_new_phrase()
 setup_keyboard()
-# setup_eyetracker()
+setup_eyetracker()
 
-# Finish application after defined time
-root.after(constant.TOTAL_TIME, finish)
 root.mainloop()

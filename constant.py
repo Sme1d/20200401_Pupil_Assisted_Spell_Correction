@@ -7,14 +7,14 @@ COLOR_PRESSED = 'red'
 COLOR_BACKGROUND = 'grey0'
 COLOR_HIGHLIGHT = 'white'
 START_DWELL_TIME = 700
-PAUSE_TIME = 500
+PAUSE_TIME = 200
 START_TIME = time.time()
+TYPING_TIME = 600000
 LOG_FILE_GAZE = '/LogGaze.csv'
 LOG_FILE_KEYS = '/LogKeys.csv'
 LOG_FILE_PATH = 'Log_Files/'
 FILE_PHRASES = 'phrases.txt'
 PLATFORM = platform.system()
-TOTAL_TIME = 11000
 
 KEYS_QWERTY = [  # Key rows
     ('q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'back'),
