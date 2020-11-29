@@ -3,7 +3,6 @@ import tkinter as tk
 import tkinter.font as tk_font
 from functools import partial
 import os
-from pathlib import  Path
 
 import tobii_research as tr
 
@@ -38,33 +37,39 @@ def key_press(key):
         else:
             input_entry.insert('end', key.lower())
 
+
 def switch_typing(value):
     global is_typing
-    global typing_time_stamp
-    global overall_typing_time
+    global typing_time
+    global total_typing_time
+    global first_phrase_loaded
 
     if is_typing != value:
         is_typing = value
         if is_typing:
-            typing_time_stamp = get_time_stamp()
+            typing_time = get_time_stamp()
         else:
-            overall_typing_time += get_time_stamp() - typing_time_stamp
-            print(overall_typing_time)
-            if overall_typing_time >= constant.TYPING_TIME:
-                finish()
+            if not first_phrase_loaded:
+                first_phrase_loaded = True
+            else:
+                total_typing_time += get_time_stamp() - typing_time
+                if total_typing_time >= constant.TYPING_TIME:
+                    finish()
 
 
 def setup_input():
-    font_input = tk_font.Font(size=20)
-    label = tk.Label(frame, fg=constant.COLOR_HIGHLIGHT, bg=constant.COLOR_BACKGROUND, font=font_input)
-    label.pack(side='top', pady=(15, 0))
+    global input_entry
+    global input_label
 
-    entry = tk.Entry(frame, width=40, bg=constant.COLOR_HIGHLIGHT, justify='center', fg='black',
-                     insertbackground='black',
-                     font=font_input)
-    entry.pack(side='top', pady=(0, 15))
-    entry.focus_set()
-    return label, entry
+    font_input = tk_font.Font(size=20)
+    input_label = tk.Label(frame, fg=constant.COLOR_HIGHLIGHT, bg=constant.COLOR_BACKGROUND, font=font_input)
+    input_label.pack(side='top', pady=(15, 0))
+
+    input_entry = tk.Entry(frame, width=40, bg=constant.COLOR_HIGHLIGHT, justify='center', fg='black',
+                           insertbackground='black',
+                           font=font_input)
+    input_entry.pack(side='top', pady=(0, 15))
+    input_entry.focus_set()
 
 
 def setup_input2():
@@ -92,12 +97,12 @@ def setup_input2():
     dwell_time_frame = tk.Frame(input_frame, bg=constant.COLOR_BACKGROUND)
     dwell_time_frame.pack(side='right', anchor='s')
 
-    minus_button = tk.Button(dwell_time_frame, text='-50ms', width=4, height=2, bd=0, highlightthickness=0,
+    minus_button = tk.Button(dwell_time_frame, text='-50ms', width=5, height=2, bd=0, highlightthickness=0,
                              font=font_input, bg=constant.COLOR_BACKGROUND, fg=constant.COLOR_HIGHLIGHT,
                              command=partial(change_dwell_time, -50))
     dwell_time_label = tk.Label(dwell_time_frame, fg=constant.COLOR_HIGHLIGHT, bg=constant.COLOR_BACKGROUND,
                                 font=font_input, text=str(constant.START_DWELL_TIME) + 'ms')
-    plus_button = tk.Button(dwell_time_frame, text='+50ms', width=4, height=2, bd=0, highlightthickness=0,
+    plus_button = tk.Button(dwell_time_frame, text='+50ms', width=5, height=2, bd=0, highlightthickness=0,
                             font=font_input, bg=constant.COLOR_BACKGROUND, fg=constant.COLOR_HIGHLIGHT,
                             command=partial(change_dwell_time, 50))
     minus_button.pack(side='left', padx=(0, 7))
@@ -158,7 +163,7 @@ def setup_keyboard():
 
         for k in constant.KEYS_QWERTY[i]:
             k = k.capitalize()
-            store_key = tk.Button(store_key_row, text=k, width=4, height=3, bd=0, highlightthickness=0, font=font_keys,
+            store_key = tk.Button(store_key_row, text=k, width=5, height=3, bd=0, highlightthickness=0, font=font_keys,
                                   command=partial(key_press, k), fg=constant.COLOR_HIGHLIGHT)
 
             if k == 'Enter' or k == 'Back':
@@ -183,6 +188,7 @@ def load_new_phrase():
     new_phrase = phrases.pop(0)
     new_phrase = new_phrase[0:len(new_phrase) - 1]
     input_label['text'] = new_phrase
+
 
 
 def log_gaze_event(gaze_data):
@@ -264,13 +270,13 @@ key_pressed = False
 file_path = ''
 dwell_time = constant.START_DWELL_TIME
 is_typing = False
-overall_typing_time = 0
-typing_time_stamp = 0
+total_typing_time = 0
+typing_time = 0
+first_phrase_loaded = False
 
 input_label = None
 input_entry = None
 dwell_time_label = None
-
 
 # Setup Tkinter
 root = tk.Tk()

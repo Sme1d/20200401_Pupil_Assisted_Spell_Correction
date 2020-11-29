@@ -13,7 +13,7 @@ START_TIME = time.time()
 TYPING_TIME = 600000
 LOG_FILE_GAZE = 'LogGaze.csv'
 LOG_FILE_KEYS = 'LogKeys.csv'
-LOG_FILE_FOLDER = Path('Log_Files')
+LOG_FILE_FOLDER = Path('Log_Files/')
 FILE_PHRASES = 'phrases.txt'
 PLATFORM = platform.system()
 
